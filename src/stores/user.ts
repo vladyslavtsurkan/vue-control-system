@@ -9,8 +9,8 @@ export const useUserStore = defineStore("user", () => {
   const LOGIN_USER = async (username: string, password: string): Promise<boolean> => {
     const response = await login(username, password);
     if (response.status === 200) {
-      isLoggedIn.value = true;
       setToken(response.data.access_token);
+      isLoggedIn.value = true;
       return true;
     } else {
       return false;

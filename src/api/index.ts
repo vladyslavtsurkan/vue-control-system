@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 import config from "@/api/config";
 import type { LoginResponse } from "@/types/auth";
-import type { Controller, ControllerCreateUpdate } from "@/types/controller";
+import type {Controller, ControllerCreate, ControllerUpdate} from "@/types/controller";
 
 export const api = axios.create({
   baseURL: config.API_URL_V1,
@@ -46,11 +46,11 @@ export const getController = async (id: number): Promise<AxiosResponse<Controlle
   return await api.get<Controller>(`/controllers/${id}`);
 };
 
-export const createController = async (controller: ControllerCreateUpdate): Promise<AxiosResponse<Controller>> => {
+export const createController = async (controller: ControllerCreate): Promise<AxiosResponse<Controller>> => {
   return await api.post<Controller>("/controllers", controller);
 };
 
-export const updateController = async (controller: ControllerCreateUpdate): Promise<AxiosResponse<Controller>> => {
+export const updateController = async (controller: ControllerUpdate): Promise<AxiosResponse<Controller>> => {
   return await api.put<Controller>(`/controllers/${controller.id}`, controller);
 };
 

@@ -77,8 +77,8 @@ import ControllerCardError from "@/components/Controllers/ControllerCardError.vu
 import TextInput from "@/components/Shared/TextInput.vue";
 import IntegerInput from "@/components/Shared/IntegerInput.vue";
 import CheckBox from "@/components/Shared/CheckBox.vue";
-import type { Controller } from "@/types/controller";
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import type {Controller, ControllerCreate, ControllerUpdate} from "@/types/controller";
+import { updateController, createController } from "@/api";
 
 const props = defineProps({
   controller: {
@@ -124,7 +124,7 @@ const editOrCancelClass = computed(
 
 const emit = defineEmits(["add:controller", "update:controller", "delete:controller"]);
 
-const changeEditMode = () => {
+const changeEditMode = async () => {
   if (
       name.value === "" ||
       description.value === "" ||
@@ -135,9 +135,7 @@ const changeEditMode = () => {
     return;
   }
   if (props.isEmpty) {
-    updatedAt.value = new Date().toISOString()
-    createdAt.value = new Date().toISOString()
-    emit("add:controller", {
+    const controller: ControllerCreate = {
       name: name.value,
       description: description.value,
       ipAddress: ipAddress.value,
@@ -147,9 +145,25 @@ const changeEditMode = () => {
       lowLimit: lowLimit.value,
       highLimit: highLimit.value,
       isActive: isActive.value,
-    });
+    };
+    try {
+      const response = await createController(controller);
+      if (response.status !== 201) {
+        console.error("Error while creating controller");
+        emit("add:controller", false);
+        isErrorMessageVisible.value = true;
+        return;
+      }
+      emit("add:controller", response.status === 201);
+      isErrorMessageVisible.value = false;
+    } catch (e) {
+      console.error("Error while creating controller", e);
+      isErrorMessageVisible.value = true;
+      emit("add:controller", false);
+      return;
+    }
   } else {
-    emit("update:controller", {
+    const controller: ControllerUpdate = {
       id: props.controller.id,
       name: name.value,
       description: description.value,
@@ -160,7 +174,23 @@ const changeEditMode = () => {
       lowLimit: lowLimit.value,
       highLimit: highLimit.value,
       isActive: isActive.value,
-    });
+    };
+    try {
+      const response = await updateController(controller);
+      if (response.status !== 200) {
+        console.error("Error while updating controller");
+        emit("update:controller", false);
+        isErrorMessageVisible.value = true;
+        return;
+      }
+      emit("update:controller", response.status === 200);
+      isErrorMessageVisible.value = false;
+    } catch (e) {
+      console.error("Error while updating controller", e);
+      isErrorMessageVisible.value = true;
+      emit("update:controller", false);
+      return;
+    }
   }
   isEditMode.value = !isEditMode.value;
 }

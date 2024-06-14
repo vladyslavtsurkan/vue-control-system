@@ -30,7 +30,7 @@
 import { ref, computed, onMounted, onRenderTriggered } from "vue";
 
 import ControllerCard from "@/components/Controllers/ControllerCard.vue";
-import type {Controller, ControllerCreateUpdate} from "@/types/controller";
+import type {Controller, ControllerCreate, ControllerUpdate} from "@/types/controller";
 import { getControllers, createController, updateController, deleteController } from "@/api";
 
 const controllers = ref<Controller[]>([]);
@@ -76,33 +76,19 @@ const updateControllersOnPage = async () => {
   }
 }
 
-const handleAddController = async (controller: ControllerCreateUpdate) => {
-  try {
-    const response = await createController(controller);
-    if (response.status !== 201) {
-      console.error("Error while creating controller");
-      isAddMode.value = false;
-      return;
-    }
-    await updateControllersOnPage();
-    isAddMode.value = false;
-  } catch (e) {
-    console.error("Error while creating controller", e);
-    isAddMode.value = false;
+const handleAddController = async (isCreated: boolean) => {
+  if (!isCreated) {
+    return;
   }
+  isAddMode.value = false;
+  await updateControllersOnPage();
 }
 
-const handleUpdateController = async (controller: Controller) => {
-  try {
-    const response = await updateController(controller);
-    if (response.status !== 200) {
-      console.error("Error while updating controller");
-
-      return;
-    }
-  } catch (e) {
-    console.error("Error while updating controller", e);
+const handleUpdateController = async (isUpdated: boolean) => {
+  if (!isUpdated) {
+    return;
   }
+  await updateControllersOnPage();
 }
 
 const handleDeleteController = async (controller_id: number) => {
@@ -120,10 +106,5 @@ const handleDeleteController = async (controller_id: number) => {
 
 onMounted(async () => {
   await updateControllersOnPage();
-  console.log("Mounted");
-})
-
-onRenderTriggered(() => {
-  console.log("Rendered");
 })
 </script>

@@ -1,4 +1,4 @@
-export interface ControllerCreateUpdate {
+export interface ControllerCreate {
   name: string;
   description: string;
   ipAddress: string;
@@ -10,8 +10,11 @@ export interface ControllerCreateUpdate {
   isActive: boolean;
 }
 
-export interface Controller extends ControllerCreateUpdate {
-  id: number;
+export interface ControllerUpdate extends ControllerCreate{
+  id: number
+}
+
+export interface Controller extends ControllerUpdate {
   createdAt: string;
   updatedAt: string;
 }
