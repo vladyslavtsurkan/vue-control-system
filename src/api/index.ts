@@ -2,25 +2,24 @@ import axios, { type AxiosResponse } from "axios";
 import Cookies from "js-cookie";
 
 import config from "@/api/config";
-import type { LoginResponse } from "@/types/auth";
+import type {LoginResponse, RegisterUserAlreadyExistsResponse, User} from "@/types/auth";
 import type {Controller, ControllerCreate, ControllerUpdate} from "@/types/controller";
 
 export const api = axios.create({
   baseURL: config.API_URL_V1,
   headers: {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${Cookies.get("token")}`,
   },
 });
 
 export const setToken = (token: string) => {
   api.defaults.headers.common.Authorization = `Bearer ${token}`;
-  Cookies.set("token", token, { sameSite: "None", secure: true });
+  Cookies.set("token", token, { sameSite: "None", secure: true, expires: 1/24 });
 };
 
 export const clearToken = () => {
   delete api.defaults.headers.common.Authorization;
-  Cookies.remove("token");
+  Cookies.remove("token", { sameSite: "None", secure: true });
 };
 
 export const login = async (username: string, password: string): Promise<AxiosResponse<LoginResponse>> => {
@@ -33,6 +32,17 @@ export const login = async (username: string, password: string): Promise<AxiosRe
     },
   });
 };
+
+export const register = async (
+  email: string, firstName: string, lastName: string, password: string
+): Promise<AxiosResponse<User | RegisterUserAlreadyExistsResponse>> => {
+  return await api.post<User>("/auth/register", {
+    email,
+    firstName,
+    lastName,
+    password,
+  });
+}
 
 export const logout = async (): Promise<AxiosResponse> => {
   return await api.post("/auth/logout");
@@ -57,3 +67,11 @@ export const updateController = async (controller: ControllerUpdate): Promise<Ax
 export const deleteController = async (id: number): Promise<AxiosResponse> => {
   return  await api.delete(`/controllers/${id}`);
 };
+
+export const readControllerData = async (id: number): Promise<AxiosResponse> => {
+  return await api.get(`/controllers/${id}/data`);
+}
+
+export const writeControllerData = async (id: number, data: number): Promise<AxiosResponse> => {
+  return await api.post(`/controllers/${id}/data`, { data });
+}

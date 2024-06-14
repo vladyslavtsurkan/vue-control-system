@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white shadow-md rounded p-6">
-    <controller-card-error v-if="isErrorMessageVisible" :close-message="closeErrorMessage" />
+    <form-error v-if="isErrorMessageVisible" :close-message="closeErrorMessage" />
 
     <div class="flex items-center justify-between">
       <h5 v-if="!isEditMode" class="text-xl font-bold text-blue-500">{{ name }}</h5>
@@ -16,9 +16,12 @@
       </div>
     </div>
 
-    <h5 class="text-xs font-semibold mb-2 text-gray-500">Значення показання: {{ controllerValue }}</h5>
-    <p v-if="!isEditMode" class="mb-4 text-gray-700">Опис: {{ description }}</p>
-    <div v-else class="mb-4">
+    <h5 v-if="!isEmpty && !isEditMode" class="text-xs font-semibold text-gray-500">
+      Значення показань:
+      <span :class="controllerValueClass">{{ controllerValue }}</span>
+    </h5>
+    <p v-if="!isEditMode" class="mt-2 mb-4 text-gray-700">Опис: {{ description }}</p>
+    <div v-else class="mt-2 mb-4">
       <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Опис:</label>
       <text-input id="description" v-model="description" placeholder="Опис" required />
     </div>
@@ -35,7 +38,7 @@
       <integer-input id="port" v-model="port" placeholder="Порт" required />
     </div>
 
-    <p v-if="!isEditMode" class="mb-4 text-gray-700">Нижній ліміт: {{ readAddress }}</p>
+    <p v-if="!isEditMode" class="mb-4 text-gray-700">Адреса зчитування: {{ readAddress }}</p>
     <div v-else class="mb-4">
       <label class="block text-gray-700 text-sm font-bold mb-2" for="readAddress">Адреса зчитування:</label>
       <integer-input id="readAddress" v-model="readAddress" placeholder="Адреса зчитування" required />
@@ -71,14 +74,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 
-import ControllerCardError from "@/components/Controllers/ControllerCardError.vue";
+import FormError from "@/components/Shared/FormError.vue";
 import TextInput from "@/components/Shared/TextInput.vue";
 import IntegerInput from "@/components/Shared/IntegerInput.vue";
 import CheckBox from "@/components/Shared/CheckBox.vue";
 import type {Controller, ControllerCreate, ControllerUpdate} from "@/types/controller";
-import { updateController, createController } from "@/api";
+import { updateController, createController, readControllerData } from "@/api";
 
 const props = defineProps({
   controller: {
@@ -150,16 +153,16 @@ const changeEditMode = async () => {
       const response = await createController(controller);
       if (response.status !== 201) {
         console.error("Error while creating controller");
-        emit("add:controller", false);
+        emit("add:controller", false, {});
         isErrorMessageVisible.value = true;
         return;
       }
-      emit("add:controller", response.status === 201);
+      emit("add:controller", response.status === 201, response.data);
       isErrorMessageVisible.value = false;
     } catch (e) {
       console.error("Error while creating controller", e);
       isErrorMessageVisible.value = true;
-      emit("add:controller", false);
+      emit("add:controller", false, {});
       return;
     }
   } else {
@@ -198,4 +201,39 @@ const changeEditMode = async () => {
 const deleteController = () => {
   emit("delete:controller", props.controller.id);
 }
+
+const controllerValueClass = computed(() => {
+  if (controllerValue.value > highLimit.value) {
+    return "text-red-500";
+  } else if (controllerValue.value < lowLimit.value) {
+    return "text-yellow-500";
+  }
+  return "text-green-500";
+})
+
+let interval: NodeJS.Timeout | null = null;
+
+const readControllerAndSetData = async () => {
+  if (props.isEmpty) {
+    return;
+  }
+  const response = await readControllerData(props.controller.id);
+  if (response.status !== 200) {
+    console.error("Error while fetching controller data");
+    return;
+  }
+  controllerValue.value = response.data.data[0];
+}
+
+onMounted(async () => {
+  await readControllerAndSetData();
+  interval = setInterval(readControllerAndSetData, 10000);
+})
+
+onUnmounted(() => {
+  if (interval) {
+    clearInterval(interval);
+    interval = null;
+  }
+})
 </script>

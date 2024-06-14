@@ -27,11 +27,11 @@
 
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onRenderTriggered } from "vue";
+import {ref, computed, onMounted} from "vue";
 
 import ControllerCard from "@/components/Controllers/ControllerCard.vue";
-import type {Controller, ControllerCreate, ControllerUpdate} from "@/types/controller";
-import { getControllers, createController, updateController, deleteController } from "@/api";
+import type { Controller } from "@/types/controller";
+import { getControllers, deleteController } from "@/api";
 
 const controllers = ref<Controller[]>([]);
 
@@ -76,19 +76,18 @@ const updateControllersOnPage = async () => {
   }
 }
 
-const handleAddController = async (isCreated: boolean) => {
+const handleAddController = async (isCreated: boolean, controller: Controller) => {
   if (!isCreated) {
     return;
   }
   isAddMode.value = false;
-  await updateControllersOnPage();
+  controllers.value.push(controller);
 }
 
 const handleUpdateController = async (isUpdated: boolean) => {
   if (!isUpdated) {
     return;
   }
-  await updateControllersOnPage();
 }
 
 const handleDeleteController = async (controller_id: number) => {
@@ -105,6 +104,7 @@ const handleDeleteController = async (controller_id: number) => {
 }
 
 onMounted(async () => {
+  controllers.value = [];
   await updateControllersOnPage();
 })
 </script>
